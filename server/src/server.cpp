@@ -3,7 +3,6 @@
 
 #include <cstdio>
 #include <cstdlib>
-#include <cstring>
 
 namespace mini_redis {
 server::server(std::string_view hostname, std::string_view port)
@@ -19,16 +18,16 @@ void server::run() const noexcept {
       continue;
     }
     printf("accepted new connection\n");
-    std::string_view msg{"hello"};
-    if (new_conn->send(msg.data(), msg.size()) == -1) {
+    protocol::message msg{std::string_view{"hello"}};
+    if (new_conn->send_msg(msg) == -1) {
       exit(1);
     }
-    char buf[4096];
-    memset(buf, 0, sizeof(buf));
-    if (new_conn->receive(buf, 5) == -1) {
+    auto response = new_conn->get_next_msg();
+    if (!response.has_value()) {
       exit(1);
     }
-    printf("from client: %s\n", buf);
+    printf("from client [%d bytes]: %s\n", response->msg_size,
+           response->msg_content);
   }
 }
 }  // namespace mini_redis

@@ -2,7 +2,6 @@
 
 #include <cstdio>
 #include <cstdlib>
-#include <cstring>
 
 namespace mini_redis {
 int client::connect_to(std::string_view hostname, std::string_view port) {
@@ -10,14 +9,15 @@ int client::connect_to(std::string_view hostname, std::string_view port) {
 }
 
 void client::run() const noexcept {
-  char buf[4096];
-  memset(buf, 0, sizeof(buf));
-  if (client_.receive(buf, 5) == -1) {
+  auto response = client_.get_next_msg();
+  if (!response.has_value()) {
+    fprintf(stderr, "error receiving data from server");
     exit(1);
   }
-  printf("from server: %s\n", buf);
-  std::string_view msg{"world"};
-  if (client_.send(msg.data(), msg.size()) == -1) {
+  printf("from server [%d bytes]: %s\n", response->msg_size,
+         response->msg_content);
+  protocol::message msg{std::string_view{"world"}};
+  if (client_.send_msg(msg) == -1) {
     exit(1);
   }
 }

@@ -3,11 +3,14 @@
 #include <unistd.h>
 
 #include <cstdio>
+#include <cstring>
 #include <utility>
 
 namespace lib::connection {
 connection::connection(int sockfd, sockaddr_storage&& addr)
-    : sockfd_{sockfd}, sock_addr_{std::move(addr)} {}
+    : sockfd_{sockfd},
+      sock_addr_{std::move(addr)},
+      state_{connection_state::initialized} {}
 
 connection::~connection() { close(sockfd_); }
 
@@ -36,6 +39,37 @@ int connection::receive(char* buffer, size_t expected_msg_size) const noexcept {
     received += static_cast<size_t>(curr_recv);
   }
   return 0;
+}
+
+std::optional<protocol::message> connection::get_next_msg() const noexcept {
+  if (state_ == connection_state::uninitialized) {
+    return std::nullopt;
+  }
+  protocol::message msg;
+  if (connection::receive(reinterpret_cast<char*>(&msg.msg_size),
+                          sizeof(msg.msg_size)) == -1) {
+    return std::nullopt;
+  }
+  if (connection::receive(msg.msg_content, msg.msg_size) == -1) {
+    return std::nullopt;
+  }
+  return msg;
+}
+
+int connection::send_msg(const protocol::message& msg) const noexcept {
+  if (state_ == connection_state::uninitialized) {
+    fprintf(stderr, "connection uninitialized\n");
+    return -1;
+  }
+  if (msg.msg_size > protocol::message::MAX_MSG_SIZE) {
+    fprintf(stderr, "message too large\n");
+    return -1;
+  }
+  char raw_msg_buf[sizeof(msg.msg_size) + msg.msg_size];
+  memcpy(raw_msg_buf, &msg.msg_size, sizeof(msg.msg_size));
+  memcpy(&raw_msg_buf[sizeof(msg.msg_size)], msg.msg_content,
+         static_cast<size_t>(msg.msg_size));
+  return connection::send(raw_msg_buf, sizeof(raw_msg_buf));
 }
 
 }  // namespace lib::connection
