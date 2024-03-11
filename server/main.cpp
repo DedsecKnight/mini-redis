@@ -1,10 +1,6 @@
-#include <include/test.h>
-
-#include <iostream>
+#include "include/server.h"
 
 int main() {
-  Test test{};
-  int x = test.get_x();
-  std::cout << x << std::endl;
-  std::cout << "server app" << std::endl;
+  mini_redis::server server{"localhost", "5000"};
+  server.run();
 }

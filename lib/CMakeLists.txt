@@ -1,2 +1,10 @@
-add_library(test SHARED src/test.cpp)
-target_include_directories(test PUBLIC .)
+add_library(connection STATIC src/connection/connection.cpp)
+target_include_directories(connection PUBLIC .)
+
+add_library(listener STATIC src/connection/listener.cpp)
+target_link_libraries(listener connection)
+target_include_directories(listener PUBLIC .)
+
+add_library(client_conn STATIC src/connection/client.cpp)
+target_link_libraries(client_conn connection)
+target_include_directories(client_conn PUBLIC .)

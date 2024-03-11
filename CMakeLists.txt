@@ -15,11 +15,11 @@ set_target_properties(server
   PROPERTIES 
   RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin"
 )
-target_link_libraries(server PRIVATE server_obj)
+target_link_libraries(server PRIVATE server_main)
 
 add_executable(client)
 set_target_properties(client
   PROPERTIES
   RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin"
 )
-target_link_libraries(client PRIVATE client_obj)
+target_link_libraries(client PRIVATE client_main)
