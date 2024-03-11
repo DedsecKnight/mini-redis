@@ -1,5 +1,6 @@
-#include <iostream>
 #include <include/test.h>
+
+#include <iostream>
 
 int main() {
   Test test{};
