@@ -96,4 +96,12 @@ std::optional<connection> listener::accept_new_listener() const noexcept {
   return std::optional<connection>{std::in_place, new_fd,
                                    std::move(client_addr)};
 }
+void listener::register_listener_to_poll_manager(
+    poll_manager& manager) noexcept {
+  if (state_ == connection_state::uninitialized ||
+      state_ == connection_state::ended) {
+    return;
+  }
+  manager.register_listener_cb(sockfd_);
+}
 }  // namespace lib::connection

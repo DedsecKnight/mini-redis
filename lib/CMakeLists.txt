@@ -1,4 +1,8 @@
-add_library(connection STATIC src/connection/connection.cpp)
+
+add_library(connection STATIC 
+  src/connection/connection.cpp 
+  src/connection/poll_manager.cpp
+)
 target_include_directories(connection PUBLIC .)
 
 add_library(listener STATIC src/connection/listener.cpp)
