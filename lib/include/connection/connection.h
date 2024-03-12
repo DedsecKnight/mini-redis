@@ -6,6 +6,7 @@
 #include <optional>
 
 #include "include/connection/poll_manager.h"
+#include "include/protocol/request.h"
 
 namespace lib::connection {
 class connection {
@@ -28,7 +29,11 @@ class connection {
   ~connection();
 
   std::optional<protocol::message> get_next_msg() const noexcept;
-  int send_msg(const protocol::message& msg) const noexcept;
+  std::optional<protocol::request> get_next_request() const noexcept;
+
+  [[deprecated]] int send_msg(const protocol::message& msg) const noexcept;
+  int send_request(const protocol::request& req) const noexcept;
+
   int enable_nonblocking_io() const noexcept;
   void register_self_to_poll_manager(poll_manager& manager) const noexcept;
   connection_state get_state() const noexcept;
@@ -36,13 +41,17 @@ class connection {
   void process_connection();
   void destroy() noexcept;
   protocol::message peek_message() const noexcept;
-  void consume_message() noexcept;
+  protocol::request peek_request() const noexcept;
+
   int get_id() const noexcept;
 
  private:
   void on_read_state() noexcept;
   void on_write_state() noexcept;
+  void nonblocking_send(char* buffer, size_t bytes_sent) noexcept;
   bool new_message_available() const noexcept;
+  void consume_buffer(size_t buffer_size) noexcept;
+  bool new_request_available() const noexcept;
 
   char read_buffer_[MAX_BUFFER_SIZE];
   char write_buffer_[MAX_BUFFER_SIZE];
@@ -53,7 +62,7 @@ class connection {
   sockaddr_storage sock_addr_;
   connection_state state_{connection_state::uninitialized};
 
-  int send(const char* buffer, size_t bytes_sent) const noexcept;
+  int send(char* buffer, size_t bytes_sent) const noexcept;
   int receive(char* buffer, size_t expected_msg_size) const noexcept;
 };
 }  // namespace lib::connection

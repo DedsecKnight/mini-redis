@@ -8,16 +8,22 @@
 #include <cerrno>
 #include <cstdio>
 #include <cstring>
+#include <optional>
+#include <string>
 #include <utility>
 
 #include "include/connection/poll_manager.h"
 #include "include/protocol/message.h"
+#include "include/protocol/request.h"
 
 namespace lib::connection {
 connection::connection(int sockfd, sockaddr_storage&& addr)
     : sockfd_{sockfd},
       sock_addr_{std::move(addr)},
-      state_{connection_state::initialized} {}
+      state_{connection_state::initialized} {
+  memset(read_buffer_, 0, sizeof(read_buffer_));
+  memset(write_buffer_, 0, sizeof(write_buffer_));
+}
 
 connection::~connection() {
   if (sockfd_ > 0) {
@@ -25,7 +31,7 @@ connection::~connection() {
   }
 }
 
-int connection::send(const char* buffer, size_t bytes_sent) const noexcept {
+int connection::send(char* buffer, size_t bytes_sent) const noexcept {
   size_t sent = 0;
   while (sent < bytes_sent) {
     ssize_t curr_sent = ::send(sockfd_, &buffer[sent], bytes_sent - sent, 0);
@@ -161,11 +167,15 @@ void connection::on_read_state() noexcept {
       return;
     } else {
       read_offset_ += static_cast<size_t>(rv);
-      while (state_ == connection_state::reading && new_message_available()) {
+      while (state_ == connection_state::reading && new_request_available()) {
         // TODO: improve process message
-        auto msg = peek_message();
-        printf("from client [%d bytes]: %s\n", msg.msg_size, msg.msg_content);
-        consume_message();
+        auto req = peek_request();
+        std::string req_str = req.to_string();
+        printf("received %d messages from client: %s\n", req.num_messages(),
+               req_str.data());
+        consume_buffer(req.size());
+        auto mock_response = req.serialize();
+        nonblocking_send(mock_response.get(), req.size());
       }
     }
   }
@@ -205,21 +215,13 @@ protocol::message connection::peek_message() const noexcept {
   memcpy(msg.msg_content, &read_buffer_[sizeof(msg.msg_size)], msg.msg_size);
   return msg;
 }
-void connection::consume_message() noexcept {
-  int msg_size;
-  memcpy(&msg_size, read_buffer_, sizeof(msg_size));
-  memcpy(write_buffer_, &msg_size, sizeof(msg_size));
-  memcpy(&write_buffer_[sizeof(msg_size)], &read_buffer_[sizeof(msg_size)],
-         msg_size);
-  write_offset_ += sizeof(msg_size) + msg_size;
-  assert(msg_size + sizeof(msg_size) <= read_offset_);
-  auto remain = read_offset_ - msg_size - sizeof(msg_size);
+void connection::consume_buffer(size_t buff_size) noexcept {
+  assert(buff_size <= read_offset_);
+  auto remain = read_offset_ - buff_size;
   if (remain > 0) {
-    memmove(read_buffer_, &read_buffer_[msg_size + sizeof(msg_size)], remain);
+    memmove(read_buffer_, &read_buffer_[buff_size], remain);
   }
   read_offset_ = remain;
-  set_state(connection_state::writing);
-  on_write_state();
 }
 int connection::get_id() const noexcept { return sockfd_; }
 connection::connection(connection&& other) {
@@ -252,5 +254,80 @@ connection& connection::operator=(connection&& other) {
   write_sent_ = other.write_sent_;
   other.sockfd_ = -1;
   return *this;
+}
+bool connection::new_request_available() const noexcept {
+  if (read_offset_ < sizeof(int)) {
+    return false;
+  }
+  int num_msg = 0;
+  memcpy(&num_msg, read_buffer_, sizeof(int));
+  assert(num_msg > 0);
+  for (int i = 0, ptr = sizeof(int); i < num_msg; i++) {
+    if (ptr + sizeof(int) > read_offset_) {
+      return false;
+    }
+    int curr_msg_size;
+    memcpy(&curr_msg_size, &read_buffer_[ptr], sizeof(int));
+    if (ptr + sizeof(int) + curr_msg_size > read_offset_) {
+      return false;
+    }
+    ptr += sizeof(int) + curr_msg_size;
+  }
+  return true;
+}
+protocol::request connection::peek_request() const noexcept {
+  protocol::request req;
+  int num_msg;
+  memcpy(&num_msg, read_buffer_, sizeof(int));
+  for (int i = 0, ptr = sizeof(int); i < num_msg; i++) {
+    protocol::message curr_msg;
+    memset(&curr_msg, 0, sizeof(curr_msg));
+    memcpy(&curr_msg.msg_size, &read_buffer_[ptr], sizeof(int));
+    memcpy(curr_msg.msg_content, &read_buffer_[ptr + sizeof(int)],
+           curr_msg.msg_size);
+    ptr += sizeof(int) + curr_msg.msg_size;
+    req.add_message(std::move(curr_msg));
+  }
+  assert(req.num_messages() == num_msg);
+  return req;
+}
+int connection::send_request(const protocol::request& req) const noexcept {
+  if (state_ == connection_state::uninitialized) {
+    fprintf(stderr, "connection uninitialized\n");
+    return -1;
+  }
+  if (req.size() > 4096) {
+    fprintf(stderr, "request too large\n");
+    return -1;
+  }
+  auto serialized_req = req.serialize();
+  return connection::send(serialized_req.get(), req.size());
+}
+void connection::nonblocking_send(char* buffer, size_t bytes_sent) noexcept {
+  if (bytes_sent > sizeof(write_buffer_)) {
+    fprintf(stderr, "data too large\n");
+    return;
+  }
+  assert(write_offset_ == 0);
+  memcpy(write_buffer_, buffer, bytes_sent);
+  write_offset_ += bytes_sent;
+  set_state(connection_state::writing);
+  on_write_state();
+}
+std::optional<protocol::request> connection::get_next_request() const noexcept {
+  int num_msg;
+  if (connection::receive(reinterpret_cast<char*>(&num_msg), sizeof(int)) ==
+      -1) {
+    return std::nullopt;
+  }
+  protocol::request req;
+  for (int i = 0; i < num_msg; i++) {
+    if (auto msg_opt = connection::get_next_msg(); msg_opt != std::nullopt) {
+      req.add_message(msg_opt.value());
+    } else {
+      return std::nullopt;
+    }
+  }
+  return req;
 }
 }  // namespace lib::connection
