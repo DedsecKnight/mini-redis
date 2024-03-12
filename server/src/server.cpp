@@ -30,4 +30,9 @@ void server::run() const noexcept {
            response->msg_content);
   }
 }
+void server::enable_nonblocking_io() const noexcept {
+  if (listener_.enable_nonblocking_io() == -1) {
+    exit(0);
+  }
+}
 }  // namespace mini_redis

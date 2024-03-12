@@ -1,6 +1,7 @@
 #include "include/server.h"
 
 int main() {
-  mini_redis::server server{"localhost", "5000"};
+  auto server = mini_redis::server{"localhost", "5000"};
+  server.enable_nonblocking_io();
   server.run();
 }

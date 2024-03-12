@@ -25,6 +25,7 @@ class connection {
 
   std::optional<protocol::message> get_next_msg() const noexcept;
   int send_msg(const protocol::message& msg) const noexcept;
+  int enable_nonblocking_io() const noexcept;
 
  protected:
   int sockfd_;

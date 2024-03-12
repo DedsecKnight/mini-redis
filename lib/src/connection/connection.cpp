@@ -1,7 +1,9 @@
 #include "include/connection/connection.h"
 
+#include <fcntl.h>
 #include <unistd.h>
 
+#include <cerrno>
 #include <cstdio>
 #include <cstring>
 #include <utility>
@@ -71,5 +73,20 @@ int connection::send_msg(const protocol::message& msg) const noexcept {
          static_cast<size_t>(msg.msg_size));
   return connection::send(raw_msg_buf, sizeof(raw_msg_buf));
 }
-
+int connection::enable_nonblocking_io() const noexcept {
+  errno = 0;
+  int flags = fcntl(sockfd_, F_GETFL, 0);
+  if (errno) {
+    perror("fcntl");
+    return -1;
+  }
+  flags |= O_NONBLOCK;
+  errno = 0;
+  fcntl(sockfd_, F_SETFL, flags);
+  if (errno) {
+    perror("fcntl");
+    return -1;
+  }
+  return 0;
+}
 }  // namespace lib::connection

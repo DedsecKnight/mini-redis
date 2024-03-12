@@ -12,6 +12,7 @@ class server {
  public:
   server(std::string_view hostname, std::string_view port);
   void run() const noexcept;
+  void enable_nonblocking_io() const noexcept;
 
  private:
   std::string_view hostname_, port_;
