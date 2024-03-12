@@ -4,7 +4,7 @@
 #include <string_view>
 #include <type_traits>
 
-namespace protocol {
+namespace lib::protocol {
 struct message {
   static constexpr const int MAX_MSG_SIZE = 4096;
   int msg_size;
@@ -22,4 +22,4 @@ struct message {
     }
   }
 };
-}  // namespace protocol
+}  // namespace lib::protocol

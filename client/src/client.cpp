@@ -9,7 +9,7 @@ int client::connect_to(std::string_view hostname, std::string_view port) {
 }
 
 void client::run() const noexcept {
-  protocol::message msg{std::string_view{"world"}};
+  lib::protocol::message msg{std::string_view{"world"}};
   if (client_.send_msg(msg) == -1) {
     exit(1);
   }
