@@ -202,7 +202,14 @@ void connection::on_write_state() noexcept {
     }
   }
 }
-void connection::destroy() noexcept { close(sockfd_); }
+void connection::destroy() noexcept {
+  memset(read_buffer_, 0, read_offset_);
+  memset(write_buffer_, 0, write_offset_);
+  read_offset_ = write_offset_ = write_sent_ = 0;
+  owner_server_ = nullptr;
+  state_ = connection_state::uninitialized;
+  close(sockfd_);
+}
 protocol::message connection::peek_message() const noexcept {
   protocol::message msg;
   memcpy(&msg.msg_size, read_buffer_, sizeof(msg.msg_size));
