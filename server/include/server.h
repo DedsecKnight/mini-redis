@@ -37,6 +37,11 @@ class server : public lib::interface::server {
   using sock_fd_t = int;
 
  private:
+  void register_conn_idle_timer(const sock_fd_t sock_id) noexcept;
+  void re_register_conn_idle_timer(const sock_fd_t sock_id) noexcept;
+  void unregister_conn_idle_timer(const sock_fd_t sock_id) noexcept;
+
+ private:
   std::string_view hostname_, port_;
   libcon::listener listener_;
   libcon::poll_manager poll_manager_;
