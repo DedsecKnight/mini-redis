@@ -14,6 +14,7 @@
 #include "include/connection/poll_manager.h"
 #include "include/protocol/message.h"
 #include "include/protocol/request.h"
+#include "include/protocol/response.h"
 
 namespace lib::connection {
 connection::connection(int sockfd, sockaddr_storage&& addr)
@@ -330,5 +331,26 @@ std::optional<protocol::request> connection::get_next_request() const noexcept {
 void connection::register_self_to_server(
     interface::server* owner_server) noexcept {
   owner_server_ = owner_server;
+}
+std::optional<protocol::response> connection::get_next_response()
+    const noexcept {
+  char msg[4096];
+  int msg_size;
+  protocol::response_code code;
+  memset(msg, 0, sizeof(msg));
+  if (connection::receive(reinterpret_cast<char*>(&code), sizeof(code)) == -1) {
+    return std::nullopt;
+  }
+  if (connection::receive(reinterpret_cast<char*>(&msg_size),
+                          sizeof(msg_size)) == -1) {
+    return std::nullopt;
+  }
+  if (connection::receive(msg, msg_size - sizeof(protocol::response_code) -
+                                   sizeof(msg_size)) == -1) {
+    return std::nullopt;
+  }
+  std::string ret;
+  ret.append(msg);
+  return protocol::response{code, ret};
 }
 }  // namespace lib::connection

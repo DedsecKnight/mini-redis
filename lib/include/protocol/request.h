@@ -13,6 +13,7 @@ class request {
   std::string to_string() const noexcept;
   std::unique_ptr<char> serialize() const noexcept;
   int num_messages() const noexcept;
+  message const& get_msg(size_t index) const noexcept;
 
  private:
   int num_msg{0}, sz{sizeof(int)};

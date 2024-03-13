@@ -10,8 +10,8 @@ namespace interface {
 
 class server {
  public:
-  virtual void on_request_available_cb(
-      const protocol::request&, connection::connection&) const noexcept = 0;
+  virtual void on_request_available_cb(const protocol::request&,
+                                       connection::connection&) noexcept = 0;
   virtual ~server() = default;
 };
 }  // namespace interface

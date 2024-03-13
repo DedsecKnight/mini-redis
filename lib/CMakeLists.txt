@@ -8,10 +8,13 @@ target_include_directories(connection PUBLIC .)
 add_library(request STATIC src/protocol/request.cpp)
 target_include_directories(request PUBLIC .)
 
+add_library(response STATIC src/protocol/response.cpp)
+target_include_directories(response PUBLIC .)
+
 add_library(listener STATIC src/connection/listener.cpp)
-target_link_libraries(listener connection request)
+target_link_libraries(listener connection request response)
 target_include_directories(listener PUBLIC .)
 
 add_library(client_conn STATIC src/connection/client.cpp)
-target_link_libraries(client_conn connection request)
+target_link_libraries(client_conn connection request response)
 target_include_directories(client_conn PUBLIC .)

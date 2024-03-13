@@ -4,8 +4,12 @@
 #include <cstdio>
 #include <cstdlib>
 
+#include "include/commands/del.h"
+#include "include/commands/get.h"
+#include "include/commands/set.h"
 #include "include/connection/connection.h"
 #include "include/protocol/request.h"
+#include "include/protocol/response.h"
 
 namespace mini_redis {
 server::server(std::string_view hostname, std::string_view port)
@@ -63,14 +67,31 @@ void server::register_new_connection(libcon::connection& new_connection) {
   client_connections_[connection_id] = std::move(new_connection);
 }
 void server::on_request_available_cb(const lib::protocol::request& request,
-                                     libcon::connection& conn) const noexcept {
+                                     libcon::connection& conn) noexcept {
   std::string req_str = request.to_string();
   printf("received %d messages from client: %s\n", request.num_messages(),
          req_str.data());
-  // generate mock response
-  auto raw_response = request.serialize();
+  // generate response
+  auto response = process_request(request);
+  auto raw_response = response.serialize();
+  printf("responding to client with: %s\n", response.to_string().data());
   // send response back to connection
   conn.consume_buffer(request.size());
-  conn.nonblocking_send(raw_response.get(), request.size());
+  conn.nonblocking_send(raw_response.get(), response.size());
+}
+lib::protocol::response server::process_request(
+    const lib::protocol::request& request) noexcept {
+  const auto& first_msg = request.get_msg(0);
+  if (!strcmp(first_msg.msg_content, "get")) {
+    return commands::get_command::execute(data_bank_, request);
+  }
+  if (!strcmp(first_msg.msg_content, "set")) {
+    return commands::set_command::execute(data_bank_, request);
+  }
+  if (!strcmp(first_msg.msg_content, "del")) {
+    return commands::del_command::execute(data_bank_, request);
+  }
+  return lib::protocol::response{lib::protocol::response_code::err,
+                                 "unknown command found"};
 }
 }  // namespace mini_redis

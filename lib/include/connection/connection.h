@@ -8,6 +8,7 @@
 #include "include/connection/poll_manager.h"
 #include "include/interface/server.h"
 #include "include/protocol/request.h"
+#include "include/protocol/response.h"
 
 namespace lib::connection {
 class connection {
@@ -31,6 +32,7 @@ class connection {
 
   std::optional<protocol::message> get_next_msg() const noexcept;
   std::optional<protocol::request> get_next_request() const noexcept;
+  std::optional<protocol::response> get_next_response() const noexcept;
 
   [[deprecated]] int send_msg(const protocol::message& msg) const noexcept;
   int send_request(const protocol::request& req) const noexcept;

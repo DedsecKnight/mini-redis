@@ -47,4 +47,7 @@ void request::add_message(const message& msg) noexcept {
   num_msg++;
   sz += msgs.back().msg_size + sizeof(int);
 }
+message const& request::get_msg(size_t index) const noexcept {
+  return msgs[index];
+}
 }  // namespace lib::protocol
