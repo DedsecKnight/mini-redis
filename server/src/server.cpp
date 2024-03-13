@@ -93,11 +93,11 @@ void server::on_request_available_cb(const lib::protocol::request& request,
          req_str.data());
   // generate response
   auto response = process_request(request);
-  auto raw_response = response.serialize();
+  auto [raw_response_size, raw_response] = response.serialize();
   printf("responding to client with: %s\n", response.to_string().data());
   // send response back to connection
   conn.consume_buffer(request.size());
-  conn.nonblocking_send(raw_response.get(), response.size());
+  conn.nonblocking_send(raw_response.get(), raw_response_size);
 }
 lib::protocol::response server::process_request(
     const lib::protocol::request& request) noexcept {

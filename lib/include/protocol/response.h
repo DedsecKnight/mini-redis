@@ -16,7 +16,7 @@ class response {
 
   int size() const noexcept;
   std::string to_string() const noexcept;
-  std::unique_ptr<char> serialize() const noexcept;
+  std::pair<int, std::unique_ptr<char>> serialize() const noexcept;
 
  private:
   response_code code_;

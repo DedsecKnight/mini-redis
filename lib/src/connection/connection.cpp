@@ -345,15 +345,15 @@ std::optional<protocol::response> connection::get_next_response()
   int msg_size;
   protocol::response_code code;
   memset(msg, 0, sizeof(msg));
-  if (connection::receive(reinterpret_cast<char*>(&code), sizeof(code)) == -1) {
-    return std::nullopt;
-  }
   if (connection::receive(reinterpret_cast<char*>(&msg_size),
                           sizeof(msg_size)) == -1) {
     return std::nullopt;
   }
-  if (connection::receive(msg, msg_size - sizeof(protocol::response_code) -
-                                   sizeof(msg_size)) == -1) {
+  if (connection::receive(reinterpret_cast<char*>(&code), sizeof(code)) == -1) {
+    return std::nullopt;
+  }
+  if (connection::receive(msg, msg_size - sizeof(protocol::response_code)) ==
+      -1) {
     return std::nullopt;
   }
   std::string ret;

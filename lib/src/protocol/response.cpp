@@ -6,8 +6,7 @@
 namespace lib::protocol {
 int response::size() const noexcept { return sz_; }
 response::response(response_code code, const std::string& data)
-    : code_{code},
-      sz_{static_cast<int>(data.size() + sizeof(response_code) + sizeof(int))} {
+    : code_{code}, sz_{static_cast<int>(data.size() + sizeof(response_code))} {
   memset(data_, 0, sizeof(data_));
   memcpy(data_, data.data(), data.size());
 }
@@ -34,12 +33,12 @@ std::string response::to_string() const noexcept {
   ret += " }";
   return ret;
 }
-std::unique_ptr<char> response::serialize() const noexcept {
+std::pair<int, std::unique_ptr<char>> response::serialize() const noexcept {
   char* ret = new char[sizeof(response_code) + sz_ + sizeof(sz_)];
-  memcpy(ret, &code_, sizeof(code_));
-  memcpy(&ret[sizeof(code_)], &sz_, sizeof(sz_));
+  memcpy(ret, &sz_, sizeof(sz_));
+  memcpy(&ret[sizeof(sz_)], &code_, sizeof(code_));
   memcpy(&ret[sizeof(code_) + sizeof(sz_)], data_, sz_);
-  return std::unique_ptr<char>{ret};
+  return std::make_pair(sizeof(int) + sz_, std::unique_ptr<char>{ret});
 }
 response& response::operator=(const response& other) {
   code_ = other.code_;
