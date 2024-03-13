@@ -5,6 +5,7 @@
 #include <cstdlib>
 
 #include "include/connection/connection.h"
+#include "include/protocol/request.h"
 
 namespace mini_redis {
 server::server(std::string_view hostname, std::string_view port)
@@ -41,8 +42,9 @@ void server::run() noexcept {
     if (poll_manager_.new_connection_available()) {
       auto new_conn = listener_.accept_new_listener();
       if (new_conn != std::nullopt) {
-        printf("accepted new connection\n");
+        new_conn->register_self_to_server(this);
         register_new_connection(new_conn.value());
+        printf("accepted new connection\n");
       }
     }
   }
@@ -59,5 +61,16 @@ void server::register_new_connection(libcon::connection& new_connection) {
     client_connections_.resize(connection_id + 1);
   }
   client_connections_[connection_id] = std::move(new_connection);
+}
+void server::on_request_available_cb(const lib::protocol::request& request,
+                                     libcon::connection& conn) const noexcept {
+  std::string req_str = request.to_string();
+  printf("received %d messages from client: %s\n", request.num_messages(),
+         req_str.data());
+  // generate mock response
+  auto raw_response = request.serialize();
+  // send response back to connection
+  conn.consume_buffer(request.size());
+  conn.nonblocking_send(raw_response.get(), request.size());
 }
 }  // namespace mini_redis

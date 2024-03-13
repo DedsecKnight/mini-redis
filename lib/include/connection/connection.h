@@ -6,6 +6,7 @@
 #include <optional>
 
 #include "include/connection/poll_manager.h"
+#include "include/interface/server.h"
 #include "include/protocol/request.h"
 
 namespace lib::connection {
@@ -45,17 +46,20 @@ class connection {
 
   int get_id() const noexcept;
 
+  void register_self_to_server(interface::server* server) noexcept;
+  void consume_buffer(size_t buffer_size) noexcept;
+  void nonblocking_send(char* buffer, size_t bytes_sent) noexcept;
+
  private:
   void on_read_state() noexcept;
   void on_write_state() noexcept;
-  void nonblocking_send(char* buffer, size_t bytes_sent) noexcept;
   bool new_message_available() const noexcept;
-  void consume_buffer(size_t buffer_size) noexcept;
   bool new_request_available() const noexcept;
 
   char read_buffer_[MAX_BUFFER_SIZE];
   char write_buffer_[MAX_BUFFER_SIZE];
   size_t read_offset_{0}, write_offset_{0}, write_sent_{0};
+  interface::server* owner_server_{nullptr};
 
  protected:
   int sockfd_;

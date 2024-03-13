@@ -9,7 +9,6 @@
 #include <cstdio>
 #include <cstring>
 #include <optional>
-#include <string>
 #include <utility>
 
 #include "include/connection/poll_manager.h"
@@ -168,14 +167,8 @@ void connection::on_read_state() noexcept {
     } else {
       read_offset_ += static_cast<size_t>(rv);
       while (state_ == connection_state::reading && new_request_available()) {
-        // TODO: improve process message
-        auto req = peek_request();
-        std::string req_str = req.to_string();
-        printf("received %d messages from client: %s\n", req.num_messages(),
-               req_str.data());
-        consume_buffer(req.size());
-        auto mock_response = req.serialize();
-        nonblocking_send(mock_response.get(), req.size());
+        assert(owner_server_ != nullptr);
+        owner_server_->on_request_available_cb(peek_request(), *this);
       }
     }
   }
@@ -237,6 +230,8 @@ connection::connection(connection&& other) {
   read_offset_ = other.read_offset_;
   write_offset_ = other.write_offset_;
   write_sent_ = other.write_sent_;
+  owner_server_ = other.owner_server_;
+  other.owner_server_ = nullptr;
   other.sockfd_ = -1;
 }
 connection& connection::operator=(connection&& other) {
@@ -252,7 +247,9 @@ connection& connection::operator=(connection&& other) {
   read_offset_ = other.read_offset_;
   write_offset_ = other.write_offset_;
   write_sent_ = other.write_sent_;
+  owner_server_ = other.owner_server_;
   other.sockfd_ = -1;
+  other.owner_server_ = nullptr;
   return *this;
 }
 bool connection::new_request_available() const noexcept {
@@ -329,5 +326,9 @@ std::optional<protocol::request> connection::get_next_request() const noexcept {
     }
   }
   return req;
+}
+void connection::register_self_to_server(
+    interface::server* owner_server) noexcept {
+  owner_server_ = owner_server;
 }
 }  // namespace lib::connection
