@@ -1,13 +1,17 @@
 #include <include/server.h>
 #include <sys/socket.h>
 
+#include <algorithm>
 #include <cassert>
 #include <cstdio>
 #include <cstdlib>
+#include <limits>
 
 #include "include/commands/del.h"
+#include "include/commands/expire.h"
 #include "include/commands/get.h"
 #include "include/commands/set.h"
+#include "include/commands/ttl.h"
 #include "include/connection/connection.h"
 #include "include/protocol/request.h"
 #include "include/protocol/response.h"
@@ -32,7 +36,16 @@ void server::run() noexcept {
       }
       conn.register_self_to_poll_manager(poll_manager_);
     }
-    if (poll_manager_.poll(calculate_poll_timeout()) < 0) {
+    uint64_t next_timeout_ts =
+        std::min(data_bank_.get_nearest_ttl_expiration_ts(),
+                 get_nearest_idle_timeout_ts());
+    uint64_t current_ts = lib::time::get_monotonic_usec();
+    uint32_t poll_timeout =
+        (next_timeout_ts == std::numeric_limits<uint64_t>::max() ? 10000
+         : next_timeout_ts < current_ts
+             ? 0
+             : static_cast<uint32_t>((next_timeout_ts - current_ts) / 1000));
+    if (poll_manager_.poll(poll_timeout) < 0) {
       exit(1);
     }
     poll_manager_.process_active_connection([&](int fd) -> void {
@@ -48,6 +61,7 @@ void server::run() noexcept {
       }
     });
     find_and_process_idle_connections();
+    data_bank_.batch_invalidate_expired_keys();
     if (poll_manager_.new_connection_available()) {
       auto new_conn = listener_.accept_new_listener();
       if (new_conn != std::nullopt) {
@@ -97,6 +111,12 @@ lib::protocol::response server::process_request(
   if (!strcmp(first_msg.msg_content, "del")) {
     return commands::del_command::execute(data_bank_, request);
   }
+  if (!strcmp(first_msg.msg_content, "expire")) {
+    return commands::expire_command::execute(data_bank_, request);
+  }
+  if (!strcmp(first_msg.msg_content, "ttl")) {
+    return commands::ttl_command::execute(data_bank_, request);
+  }
   return lib::protocol::response{lib::protocol::response_code::err,
                                  "unknown command found"};
 }
@@ -113,16 +133,11 @@ void server::find_and_process_idle_connections() noexcept {
     client_connections_[curr_element.first].destroy();
   }
 }
-uint32_t server::calculate_poll_timeout() const noexcept {
+uint64_t server::get_nearest_idle_timeout_ts() const noexcept {
   if (idle_list_.empty()) {
-    return 10000;
+    return std::numeric_limits<uint64_t>::max();
   }
-  uint64_t current_us = lib::time::get_monotonic_usec();
-  uint64_t next_us = idle_list_.begin()->second + IDLE_TIMEOUT_MS * 1000;
-  if (next_us <= current_us) {
-    return 0;
-  }
-  return static_cast<uint32_t>((next_us - current_us) / 1000);
+  return idle_list_.begin()->second + IDLE_TIMEOUT_MS * 1000;
 }
 void server::register_conn_idle_timer(const sock_fd_t sock_id) noexcept {
   assert(conn_to_iterator_.find(sock_id) == conn_to_iterator_.end());

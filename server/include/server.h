@@ -32,7 +32,7 @@ class server : public lib::interface::server {
  private:
   void register_new_connection(libcon::connection& new_connection);
   void find_and_process_idle_connections() noexcept;
-  uint32_t calculate_poll_timeout() const noexcept;
+  uint64_t get_nearest_idle_timeout_ts() const noexcept;
   using conn_idle_timer_t = std::pair<int, uint64_t>;
   using sock_fd_t = int;
 

@@ -3,6 +3,8 @@ add_library(commands STATIC
   src/commands/get.cpp
   src/commands/set.cpp
   src/commands/del.cpp
+  src/commands/expire.cpp
+  src/commands/ttl.cpp
 )
 target_link_libraries(commands response request)
 target_include_directories(commands PUBLIC .)
