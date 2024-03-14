@@ -2,6 +2,8 @@
 add_library(data_types STATIC
   src/data_types/redis_nil.cpp
   src/data_types/redis_string.cpp
+  src/data_types/redis_int.cpp
+  src/data_types/redis_array.cpp
   src/data_types/registry.cpp
 )
 target_include_directories(data_types PUBLIC .)
