@@ -11,7 +11,8 @@ namespace lib::data_types {
 std::pair<redis_type::size_type, std::unique_ptr<char>> redis_array::serialize()
     const noexcept {
   int raw_size = std::accumulate(
-      data_.begin(), data_.end(), sizeof(TYPE_CODE) + sizeof(int),
+      data_.begin(), data_.end(),
+      static_cast<int>(sizeof(TYPE_CODE) + sizeof(int)),
       [](auto acc, const auto& elem) { return acc + elem->raw_size(); });
   char* ret = new char[raw_size];
   int num_elements = static_cast<int>(data_.size());

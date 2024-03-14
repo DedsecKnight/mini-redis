@@ -121,4 +121,21 @@ global_data::sorted_set_get_key_data(const std::string& key) const noexcept {
   }
   return ret;
 }
+std::vector<std::string> global_data::sorted_set_find_member_within_score_range(
+    const std::string& key, double min_score, double max_score) const noexcept {
+  if (global_sorted_sets_.find(key) == global_sorted_sets_.end()) {
+    return {};
+  }
+  if (global_sorted_sets_.at(key).empty()) {
+    return {};
+  }
+  std::vector<std::string> ret;
+  auto it =
+      global_sorted_sets_.at(key).lower_bound(std::make_pair(min_score, ""));
+  for (; it != global_sorted_sets_.at(key).end() && it->first <= max_score;
+       it = std::next(it)) {
+    ret.push_back(it->second);
+  }
+  return ret;
+}
 }  // namespace mini_redis::data

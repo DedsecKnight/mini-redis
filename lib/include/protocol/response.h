@@ -5,6 +5,7 @@
 #include <string>
 #include <type_traits>
 
+#include "include/data_types/redis_array.h"
 #include "include/data_types/redis_double.h"
 #include "include/data_types/redis_nil.h"
 #include "include/data_types/redis_string.h"
@@ -21,6 +22,16 @@ class response {
       : code_{code},
         sz_{static_cast<int>(sizeof(code) + data->raw_size())},
         data_{std::move(data)} {}
+  template <typename T>
+  explicit response(response_code code, const std::vector<T>& data)
+      : code_{code} {
+    data_ = std::make_unique<data_types::redis_array>(
+        data_types::redis_array::from(data));
+    sz_ = sizeof(response_code) + data_->raw_size();
+    if (sz_ == 32) {
+      fprintf(stderr, "inner_data_size = %d\n", data_->raw_size());
+    }
+  }
   template <typename T>
   explicit response(response_code code, const T& data) : code_{code} {
     if constexpr (std::is_same_v<T, std::string_view> ||
@@ -53,7 +64,7 @@ class response {
 
  private:
   response_code code_;
-  int sz_;
+  int sz_{0};
   std::unique_ptr<data_types::redis_type> data_{nullptr};
 };
 }  // namespace lib::protocol

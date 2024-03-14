@@ -8,6 +8,7 @@ add_library(commands STATIC
   src/commands/zadd.cpp
   src/commands/zscore.cpp
   src/commands/zrem.cpp
+  src/commands/zrangebyscore.cpp
 )
 target_link_libraries(commands response request)
 target_include_directories(commands PUBLIC .)

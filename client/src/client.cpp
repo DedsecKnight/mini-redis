@@ -28,6 +28,9 @@ void client::run() const noexcept {
       utilities::construct_request(
           std::string_view{"zadd"}, std::string_view{"test_set"},
           std::string_view{"12.50"}, std::string_view{"test_member"}),
+      utilities::construct_request(
+          std::string_view{"zadd"}, std::string_view{"test_set"},
+          std::string_view{"15.50"}, std::string_view{"test_member_2"}),
       utilities::construct_request(std::string_view{"zscore"},
                                    std::string_view{"test_set"},
                                    std::string_view{"test_member"}),
@@ -37,6 +40,9 @@ void client::run() const noexcept {
       utilities::construct_request(std::string_view{"zscore"},
                                    std::string_view{"test_set"},
                                    std::string_view{"test_member"}),
+      utilities::construct_request(
+          std::string_view{"zrangebyscore"}, std::string_view{"test_set"},
+          std::string_view{"15"}, std::string_view{"20"}),
   };
   for (const auto& req : requests) {
     if (client_.send_request(req) == -1) {

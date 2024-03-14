@@ -31,6 +31,9 @@ class global_data {
                                const std::string& member) noexcept;
   std::optional<std::vector<std::pair<double, std::string>>>
   sorted_set_get_key_data(const std::string& key) const noexcept;
+  std::vector<std::string> sorted_set_find_member_within_score_range(
+      const std::string& key, double min_score,
+      double max_score) const noexcept;
 
  private:
   void invalidate_key(const std::string& key) noexcept;

@@ -24,6 +24,12 @@ redis_string redis_string::from(std::string_view data) noexcept {
   ret.sz_ = data.size();
   return ret;
 }
+redis_string redis_string::from(const std::string& data) noexcept {
+  redis_string ret;
+  ret.data_ = data;
+  ret.sz_ = data.size();
+  return ret;
+}
 std::unique_ptr<redis_type> redis_string::clone() const noexcept {
   return std::make_unique<redis_string>(
       redis_string::from(std::string_view{data_}));

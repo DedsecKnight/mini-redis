@@ -13,6 +13,7 @@
 #include "include/commands/set.h"
 #include "include/commands/ttl.h"
 #include "include/commands/zadd.h"
+#include "include/commands/zrangebyscore.h"
 #include "include/commands/zrem.h"
 #include "include/commands/zscore.h"
 #include "include/connection/connection.h"
@@ -129,6 +130,9 @@ lib::protocol::response server::process_request(
   }
   if (!strcmp(first_msg.msg_content, "zrem")) {
     return commands::zrem_command::execute(data_bank_, request);
+  }
+  if (!strcmp(first_msg.msg_content, "zrangebyscore")) {
+    return commands::zrangebyscore_command::execute(data_bank_, request);
   }
   return lib::protocol::response{lib::protocol::response_code::err,
                                  "unknown command found"};
