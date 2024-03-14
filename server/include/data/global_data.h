@@ -29,6 +29,8 @@ class global_data {
       const std::string& key, const std::string& member) const noexcept;
   void sorted_set_erase_member(const std::string& key,
                                const std::string& member) noexcept;
+  std::optional<std::vector<std::pair<double, std::string>>>
+  sorted_set_get_key_data(const std::string& key) const noexcept;
 
  private:
   void invalidate_key(const std::string& key) noexcept;

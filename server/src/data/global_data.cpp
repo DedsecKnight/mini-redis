@@ -22,7 +22,14 @@ void global_data::invalidate_key(const std::string& key) noexcept {
     ttl_heap_.erase(std::make_pair(key_to_ttl_[key], key));
     key_to_ttl_.erase(key);
   }
-  global_mp_.erase(key);
+  assert(global_mp_.find(key) != global_mp_.end() ||
+         global_sorted_sets_.find(key) != global_sorted_sets_.end());
+  if (global_mp_.find(key) != global_mp_.end()) {
+    global_mp_.erase(key);
+  } else {
+    global_sorted_sets_.erase(key);
+    kv_in_sorted_set_.erase(key);
+  }
 }
 void global_data::set_ttl_ms(const std::string& key, int64_t ttl_ms) noexcept {
   if (ttl_ms < 0) {
@@ -54,7 +61,8 @@ void global_data::batch_invalidate_expired_keys() noexcept {
 }
 std::pair<int32_t, uint64_t> global_data::get_ttl_ts(
     const std::string& key) const noexcept {
-  if (global_mp_.find(key) == global_mp_.end()) {
+  if (global_mp_.find(key) == global_mp_.end() &&
+      global_sorted_sets_.find(key) == global_sorted_sets_.end()) {
     return std::make_pair(-2, 0);
   }
   if (key_to_ttl_.find(key) == key_to_ttl_.end()) {
@@ -100,5 +108,17 @@ void global_data::sorted_set_erase_member(const std::string& key,
   global_sorted_sets_[key].erase(
       std::make_pair(kv_in_sorted_set_[key][member], member));
   kv_in_sorted_set_[key].erase(member);
+}
+std::optional<std::vector<std::pair<double, std::string>>>
+global_data::sorted_set_get_key_data(const std::string& key) const noexcept {
+  if (global_sorted_sets_.find(key) == global_sorted_sets_.end()) {
+    return std::nullopt;
+  }
+  std::vector<std::pair<double, std::string>> ret;
+  for (auto it = global_sorted_sets_.at(key).begin();
+       it != global_sorted_sets_.at(key).end(); it = std::next(it)) {
+    ret.emplace_back(it->first, it->second);
+  }
+  return ret;
 }
 }  // namespace mini_redis::data

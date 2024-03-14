@@ -11,7 +11,8 @@ lib::protocol::response expire_command::execute(
                                    std::string{err_msg}};
   }
   auto key = std::string{req.get_msg(1).msg_content};
-  if (!data_bank.get(key).has_value()) {
+  if (!data_bank.get(key).has_value() &&
+      !data_bank.sorted_set_get_key_data(key).has_value()) {
     return lib::protocol::response{lib::protocol::response_code::nx, nullptr};
   }
   try {
