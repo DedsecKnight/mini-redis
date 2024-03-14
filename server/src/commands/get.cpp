@@ -14,8 +14,7 @@ lib::protocol::response get_command::execute(
   auto key = std::string{req.get_msg(1).msg_content};
   auto value_opt = data_bank.get(key);
   if (!value_opt.has_value()) {
-    return lib::protocol::response{lib::protocol::response_code::nx,
-                                   "key not found"};
+    return lib::protocol::response{lib::protocol::response_code::nx, nullptr};
   }
   return lib::protocol::response{lib::protocol::response_code::ok,
                                  value_opt.value()};

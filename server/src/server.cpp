@@ -94,7 +94,8 @@ void server::on_request_available_cb(const lib::protocol::request& request,
   // generate response
   auto response = process_request(request);
   auto [raw_response_size, raw_response] = response.serialize();
-  printf("responding to client with: %s\n", response.to_string().data());
+  printf("responding to client with message of size %d bytes: %s\n",
+         raw_response_size, response.to_string().data());
   // send response back to connection
   conn.consume_buffer(request.size());
   conn.nonblocking_send(raw_response.get(), raw_response_size);

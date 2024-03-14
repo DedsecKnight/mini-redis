@@ -14,8 +14,7 @@ lib::protocol::response del_command::execute(
   auto key = std::string{req.get_msg(1).msg_content};
   auto rv = data_bank.del(key);
   if (!rv) {
-    return lib::protocol::response{lib::protocol::response_code::nx,
-                                   "key not found"};
+    return lib::protocol::response{lib::protocol::response_code::nx, nullptr};
   }
   return lib::protocol::response{lib::protocol::response_code::ok, ""};
 }

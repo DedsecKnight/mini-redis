@@ -12,6 +12,7 @@
 #include <utility>
 
 #include "include/connection/poll_manager.h"
+#include "include/data_types/registry.h"
 #include "include/protocol/message.h"
 #include "include/protocol/request.h"
 #include "include/protocol/response.h"
@@ -356,8 +357,6 @@ std::optional<protocol::response> connection::get_next_response()
       -1) {
     return std::nullopt;
   }
-  std::string ret;
-  ret.append(msg);
-  return protocol::response{code, ret};
+  return protocol::response{code, data_types::registry::deserialize(msg)};
 }
 }  // namespace lib::connection

@@ -12,8 +12,7 @@ lib::protocol::response expire_command::execute(
   }
   auto key = std::string{req.get_msg(1).msg_content};
   if (!data_bank.get(key).has_value()) {
-    return lib::protocol::response{lib::protocol::response_code::nx,
-                                   "key not found"};
+    return lib::protocol::response{lib::protocol::response_code::nx, nullptr};
   }
   try {
     int64_t ttl_ms = std::stol(std::string{req.get_msg(2).msg_content}) * 1000;
