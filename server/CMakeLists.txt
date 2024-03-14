@@ -5,6 +5,9 @@ add_library(commands STATIC
   src/commands/del.cpp
   src/commands/expire.cpp
   src/commands/ttl.cpp
+  src/commands/zadd.cpp
+  src/commands/zscore.cpp
+  src/commands/zrem.cpp
 )
 target_link_libraries(commands response request)
 target_include_directories(commands PUBLIC .)

@@ -5,6 +5,7 @@
 #include <string>
 #include <type_traits>
 
+#include "include/data_types/redis_double.h"
 #include "include/data_types/redis_nil.h"
 #include "include/data_types/redis_string.h"
 #include "include/data_types/redis_type.h"
@@ -28,6 +29,9 @@ class response {
           data_types::redis_string::from(data));
     } else if constexpr (std::is_same_v<T, decltype(nullptr)>) {
       data_ = std::make_unique<data_types::redis_nil>(data_types::redis_nil{});
+    } else if constexpr (std::is_same_v<T, double>) {
+      data_ = std::make_unique<data_types::redis_double>(
+          data_types::redis_double::from(data));
     } else {
       assert(false);
     }

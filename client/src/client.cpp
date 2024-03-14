@@ -25,6 +25,18 @@ void client::run() const noexcept {
                                    std::string_view{"test_key"}),
       utilities::construct_request(std::string_view{"hello"},
                                    std::string_view{"world"}),
+      utilities::construct_request(
+          std::string_view{"zadd"}, std::string_view{"test_set"},
+          std::string_view{"12.50"}, std::string_view{"test_member"}),
+      utilities::construct_request(std::string_view{"zscore"},
+                                   std::string_view{"test_set"},
+                                   std::string_view{"test_member"}),
+      utilities::construct_request(std::string_view{"zrem"},
+                                   std::string_view{"test_set"},
+                                   std::string_view{"test_member"}),
+      utilities::construct_request(std::string_view{"zscore"},
+                                   std::string_view{"test_set"},
+                                   std::string_view{"test_member"}),
   };
   for (const auto& req : requests) {
     if (client_.send_request(req) == -1) {

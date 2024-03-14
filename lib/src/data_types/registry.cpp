@@ -4,6 +4,7 @@
 #include <cstring>
 
 #include "include/data_types/redis_array.h"
+#include "include/data_types/redis_double.h"
 #include "include/data_types/redis_int.h"
 #include "include/data_types/redis_nil.h"
 #include "include/data_types/redis_string.h"
@@ -27,6 +28,10 @@ std::unique_ptr<redis_type> registry::deserialize(char* buffer) noexcept {
     case ARRAY_CODE: {
       return std::make_unique<redis_array>(
           redis_array::from(&buffer[sizeof(int)]));
+    }
+    case DOUBLE_CODE: {
+      return std::make_unique<redis_double>(
+          redis_double::from(&buffer[sizeof(int)]));
     }
     default: {
       assert(false);
