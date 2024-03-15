@@ -21,5 +21,5 @@ To build this project, create a folder named `build` within the root directory a
 $ cmake --build ./build
 ```
 Upon finish building, CMake will generate the 2 following binaries: 
-- `./build/bin/server`: This is the server that will process the command received from client through socket connection. 
-- `./build/bin/client`: This is a mock client that will send command to server through socket connection. 
+- `./build/examples/server`: This is the server that will process the command received from client through socket connection. 
+- `./build/examples/client`: This is a mock client that will send command to server through socket connection. 

@@ -1,6 +1,3 @@
 add_library(client_obj STATIC src/client.cpp)
 target_link_libraries(client_obj client_conn)
 target_include_directories(client_obj PUBLIC .)
-add_library(client_main OBJECT main.cpp)
-target_link_libraries(client_main client_obj)
-target_include_directories(client_main PUBLIC .)
