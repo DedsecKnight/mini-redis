@@ -6,12 +6,14 @@
 #include <unordered_map>
 #include <utility>
 
+#include "include/concurrency/thread_pool.h"
 #include "include/data_structures/sorted_set_container.h"
 
 namespace mini_redis::data {
 class global_data {
  private:
   static constexpr const int MAX_EVICTION_BATCH_SIZE = 2000;
+  static constexpr const int SS_SYNCHRONOUS_DELETE_MAX_SIZE = 10000;
 
  public:
   std::optional<std::string> get(const std::string& key) const noexcept;
@@ -43,6 +45,7 @@ class global_data {
   std::unordered_map<std::string, std::string> global_mp_;
   std::unordered_map<std::string, uint64_t> key_to_ttl_;
   std::set<key_ttl_entry_t> ttl_heap_;
+  lib::concurrency::thread_pool tp_;
   lib::data_structures::sorted_set_container ss_container_;
 };
 

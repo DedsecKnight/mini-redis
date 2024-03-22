@@ -1,7 +1,9 @@
 #include "include/data/global_data.h"
 
+#include <functional>
 #include <limits>
 
+#include "include/data_types/ordered_set.h"
 #include "include/time/manager.h"
 
 namespace mini_redis::data {
@@ -27,7 +29,17 @@ void global_data::invalidate_key(const std::string& key) noexcept {
   if (global_mp_.find(key) != global_mp_.end()) {
     global_mp_.erase(key);
   } else {
-    ss_container_.erase_key(key);
+    auto [dss, dkv] = ss_container_.erase_key(key);
+    assert(dss->size() == dkv->size());
+    if (dss->size() > global_data::SS_SYNCHRONOUS_DELETE_MAX_SIZE) {
+      tp_.schedule_task(std::bind(
+          [](lib::data_types::ordered_set<std::pair<double, std::string>>*
+                 elem) { delete elem; },
+          dss));
+      tp_.schedule_task(std::bind(
+          [](std::unordered_map<std::string, double>* elem) { delete elem; },
+          dkv));
+    }
   }
 }
 void global_data::set_ttl_ms(const std::string& key, int64_t ttl_ms) noexcept {
