@@ -29,3 +29,6 @@ target_include_directories(listener PUBLIC .)
 add_library(client_conn STATIC src/connection/client.cpp)
 target_link_libraries(client_conn connection request response)
 target_include_directories(client_conn PUBLIC .)
+
+add_library(sscontainer STATIC src/data_structures/sorted_set_container.cpp)
+target_include_directories(sscontainer PUBLIC .)

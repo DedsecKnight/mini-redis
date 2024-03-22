@@ -23,12 +23,11 @@ void global_data::invalidate_key(const std::string& key) noexcept {
     key_to_ttl_.erase(key);
   }
   assert(global_mp_.find(key) != global_mp_.end() ||
-         global_sorted_sets_.find(key) != global_sorted_sets_.end());
+         ss_container_.contains_key(key));
   if (global_mp_.find(key) != global_mp_.end()) {
     global_mp_.erase(key);
   } else {
-    global_sorted_sets_.erase(key);
-    kv_in_sorted_set_.erase(key);
+    ss_container_.erase_key(key);
   }
 }
 void global_data::set_ttl_ms(const std::string& key, int64_t ttl_ms) noexcept {
@@ -62,7 +61,7 @@ void global_data::batch_invalidate_expired_keys() noexcept {
 std::pair<int32_t, uint64_t> global_data::get_ttl_ts(
     const std::string& key) const noexcept {
   if (global_mp_.find(key) == global_mp_.end() &&
-      global_sorted_sets_.find(key) == global_sorted_sets_.end()) {
+      !ss_container_.contains_key(key)) {
     return std::make_pair(-2, 0);
   }
   if (key_to_ttl_.find(key) == key_to_ttl_.end()) {
@@ -76,66 +75,24 @@ int global_data::sorted_set_set_member_data(const std::string& key,
   if (global_mp_.find(key) != global_mp_.end()) {
     return -1;  // key already exists, but not of sorted set type
   }
-  if (kv_in_sorted_set_.find(key) != kv_in_sorted_set_.end() &&
-      kv_in_sorted_set_[key].find(member) != kv_in_sorted_set_[key].end()) {
-    global_sorted_sets_[key].erase(
-        std::make_pair(kv_in_sorted_set_[key][member], member));
-  }
-  kv_in_sorted_set_[key][member] = score;
-  global_sorted_sets_[key].insert(std::make_pair(score, member));
+  ss_container_.set_member_data(key, member, score);
   return 0;
 }
 std::optional<double> global_data::sorted_set_query_member_score(
     const std::string& key, const std::string& member) const noexcept {
-  if (global_sorted_sets_.find(key) == global_sorted_sets_.end()) {
-    return std::nullopt;
-  }
-  assert(kv_in_sorted_set_.find(key) != kv_in_sorted_set_.end());
-  if (kv_in_sorted_set_.at(key).find(member) ==
-      kv_in_sorted_set_.at(key).end()) {
-    return std::nullopt;
-  }
-  return kv_in_sorted_set_.at(key).at(member);
+  return ss_container_.query_member_score(key, member);
 }
 void global_data::sorted_set_erase_member(const std::string& key,
                                           const std::string& member) noexcept {
-  if (global_sorted_sets_.find(key) == global_sorted_sets_.end()) {
-    return;
-  }
-  if (kv_in_sorted_set_[key].find(member) == kv_in_sorted_set_[key].end()) {
-    return;
-  }
-  global_sorted_sets_[key].erase(
-      std::make_pair(kv_in_sorted_set_[key][member], member));
-  kv_in_sorted_set_[key].erase(member);
+  ss_container_.erase_member(key, member);
 }
 std::optional<std::vector<std::pair<double, std::string>>>
 global_data::sorted_set_get_key_data(const std::string& key) const noexcept {
-  if (global_sorted_sets_.find(key) == global_sorted_sets_.end()) {
-    return std::nullopt;
-  }
-  std::vector<std::pair<double, std::string>> ret;
-  for (auto it = global_sorted_sets_.at(key).begin();
-       it != global_sorted_sets_.at(key).end(); it = std::next(it)) {
-    ret.emplace_back(it->first, it->second);
-  }
-  return ret;
+  return ss_container_.get_key_data(key);
 }
 std::vector<std::string> global_data::sorted_set_find_member_within_score_range(
     const std::string& key, double min_score, double max_score) const noexcept {
-  if (global_sorted_sets_.find(key) == global_sorted_sets_.end()) {
-    return {};
-  }
-  if (global_sorted_sets_.at(key).empty()) {
-    return {};
-  }
-  std::vector<std::string> ret;
-  auto it =
-      global_sorted_sets_.at(key).lower_bound(std::make_pair(min_score, ""));
-  for (; it != global_sorted_sets_.at(key).end() && it->first <= max_score;
-       it = std::next(it)) {
-    ret.push_back(it->second);
-  }
-  return ret;
+  return ss_container_.find_member_within_score_range(key, min_score,
+                                                      max_score);
 }
 }  // namespace mini_redis::data

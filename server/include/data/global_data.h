@@ -6,7 +6,7 @@
 #include <unordered_map>
 #include <utility>
 
-#include "include/data_types/ordered_set.h"
+#include "include/data_structures/sorted_set_container.h"
 
 namespace mini_redis::data {
 class global_data {
@@ -43,11 +43,7 @@ class global_data {
   std::unordered_map<std::string, std::string> global_mp_;
   std::unordered_map<std::string, uint64_t> key_to_ttl_;
   std::set<key_ttl_entry_t> ttl_heap_;
-  std::unordered_map<
-      std::string, lib::data_types::ordered_set<std::pair<double, std::string>>>
-      global_sorted_sets_;
-  std::unordered_map<std::string, std::unordered_map<std::string, double>>
-      kv_in_sorted_set_;
+  lib::data_structures::sorted_set_container ss_container_;
 };
 
 }  // namespace mini_redis::data

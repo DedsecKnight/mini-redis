@@ -10,7 +10,7 @@ add_library(commands STATIC
   src/commands/zrem.cpp
   src/commands/zrangebyscore.cpp
 )
-target_link_libraries(commands response request)
+target_link_libraries(commands response request sscontainer)
 target_include_directories(commands PUBLIC .)
 
 add_library(server_obj STATIC 
