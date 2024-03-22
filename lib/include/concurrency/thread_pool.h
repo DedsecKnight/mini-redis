@@ -29,7 +29,7 @@ class thread_pool {
 
  public:
   explicit thread_pool(
-      std::size_t num_threads = std::thread::hardware_concurrency());
+      std::size_t num_threads = std::thread::hardware_concurrency() - 1);
   void schedule_task(std::function<void()>&& task) noexcept;
   ~thread_pool();
 
