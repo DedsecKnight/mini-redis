@@ -32,3 +32,6 @@ target_include_directories(client_conn PUBLIC .)
 
 add_library(sscontainer STATIC src/data_structures/sorted_set_container.cpp)
 target_include_directories(sscontainer PUBLIC .)
+
+add_library(threadpool STATIC src/concurrency/thread_pool.cpp)
+target_include_directories(threadpool PUBLIC .)
