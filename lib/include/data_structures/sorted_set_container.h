@@ -19,8 +19,9 @@ class sorted_set_container {
   std::vector<std::string> find_member_within_score_range(
       const std::string& key, double min_score,
       double max_score) const noexcept;
-  std::pair<lib::data_types::ordered_set<std::pair<double, std::string>>*,
-            std::unordered_map<std::string, double>*>
+  [[nodiscard]] std::pair<
+      lib::data_types::ordered_set<std::pair<double, std::string>>*,
+      std::unordered_map<std::string, double>*>
   erase_key(const std::string& key) noexcept;
 
  private:

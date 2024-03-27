@@ -73,8 +73,9 @@ std::vector<std::string> sorted_set_container::find_member_within_score_range(
 bool sorted_set_container::contains_key(const std::string& key) const noexcept {
   return kv_in_sorted_set_.find(key) != kv_in_sorted_set_.end();
 }
-std::pair<lib::data_types::ordered_set<std::pair<double, std::string>>*,
-          std::unordered_map<std::string, double>*>
+[[nodiscard]] std::pair<
+    lib::data_types::ordered_set<std::pair<double, std::string>>*,
+    std::unordered_map<std::string, double>*>
 sorted_set_container::erase_key(const std::string& key) noexcept {
   decltype(ss_)::mapped_type to_be_deleted_ss{nullptr};
   ss_[key].swap(to_be_deleted_ss);
