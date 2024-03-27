@@ -39,6 +39,9 @@ void global_data::invalidate_key(const std::string& key) noexcept {
       tp_.schedule_task(std::bind(
           [](std::unordered_map<std::string, double>* elem) { delete elem; },
           dkv));
+    } else {
+      delete dss;
+      delete dkv;
     }
   }
 }

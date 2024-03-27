@@ -8,7 +8,15 @@ void sorted_set_container::set_member_data(const std::string& key,
       kv_in_sorted_set_[key]->find(member) != kv_in_sorted_set_[key]->end()) {
     ss_[key]->erase(std::make_pair(kv_in_sorted_set_[key]->at(member), member));
   }
-  (*kv_in_sorted_set_[key])[member] = score;
+  if (kv_in_sorted_set_.find(key) == kv_in_sorted_set_.end()) {
+    kv_in_sorted_set_[key] =
+        std::make_unique<std::unordered_map<std::string, double>>();
+  }
+  if (ss_.find(key) == ss_.end()) {
+    ss_[key] = std::make_unique<
+        lib::data_types::ordered_set<std::pair<double, std::string>>>();
+  }
+  kv_in_sorted_set_[key]->emplace(member, score);
   ss_[key]->insert(std::make_pair(score, member));
 }
 std::optional<double> sorted_set_container::query_member_score(
