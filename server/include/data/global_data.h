@@ -18,7 +18,7 @@ class global_data {
  public:
   std::optional<std::string> get(const std::string& key) const noexcept;
   void set(const std::string& key, const std::string& value) noexcept;
-  size_t del(const std::string& key) noexcept { return global_mp_.erase(key); }
+  size_t del(const std::string& key) noexcept;
   void set_ttl_ms(const std::string& key, int64_t ttl_ms) noexcept;
   uint64_t get_nearest_ttl_expiration_ts() const noexcept;
   void batch_invalidate_expired_keys() noexcept;

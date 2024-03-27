@@ -110,4 +110,27 @@ std::vector<std::string> global_data::sorted_set_find_member_within_score_range(
   return ss_container_.find_member_within_score_range(key, min_score,
                                                       max_score);
 }
+size_t global_data::del(const std::string& key) noexcept {
+  if (global_mp_.find(key) != global_mp_.end()) {
+    return global_mp_.erase(key);
+  }
+  if (ss_container_.contains_key(key)) {
+    auto [dss, dkv] = ss_container_.erase_key(key);
+    assert(dss->size() == dkv->size());
+    if (dss->size() > global_data::SS_SYNCHRONOUS_DELETE_MAX_SIZE) {
+      tp_.schedule_task(std::bind(
+          [](lib::data_types::ordered_set<std::pair<double, std::string>>*
+                 elem) { delete elem; },
+          dss));
+      tp_.schedule_task(std::bind(
+          [](std::unordered_map<std::string, double>* elem) { delete elem; },
+          dkv));
+    } else {
+      delete dss;
+      delete dkv;
+    }
+    return 1;
+  }
+  return 0;
+}
 }  // namespace mini_redis::data
